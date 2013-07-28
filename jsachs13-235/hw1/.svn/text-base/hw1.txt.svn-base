@@ -1,0 +1,58 @@
+1)
+(Note, the use of stats like goals and wins, while possibly dynamic,
+is assumed to be the stats at the end of a season, and thus static.
+This database could be the results of the 2011 season, for example.)
+
+
+LEAGUE
+League_name, Country
+
+TEAM
+Team_name, Wins, Draws, Losses, League_name, ManagerID
+
+MANAGER
+ManagerID, Lname, Fname, Team_name
+
+PLAYER
+PlayerID, Lname, Fname, DOB, Goals, Team_name
+
+2)
+- No team may have more than 25 players.
+- Leagues must have exactly 20 teams (exempt my fabricated data, it would have been a
+pain to do 20 teams).
+- Players must be at least 16 to play.
+
+4)
+
+Which player has scored the most goals?
+SELECT Fname, Lname
+FROM PLAYER
+WHERE Goals = (SELECT MAX(Goals) FROM PLAYER);
+Returns:
+Lionel|Messi
+
+List all players on teams with more than 24 wins.
+SELECT * FROM PLAYER
+WHERE Team_name IN
+(SELECT Team_name FROM TEAM
+WHERE Wins > 24);
+Returns:
+3|Ronaldo|Cristiano|2/5/85|32|Real Madrid
+4|Benzema|Karim|12/19/97|22|Real Madrid
+9|Robben|Arjen|1/23/84|24|Bayern Munich
+10|Gomez|Mario|7/10/85|25|Bayern Munich
+
+List all players born in 1985.
+SELECT Fname, Lname, DOB FROM PLAYER
+WHERE DOB LIKE "%/85";
+Returns:
+Cristiano|Ronaldo|2/5/85
+Luka|Modric|9/9/85
+Wayne|Rooney|10/24/85
+Mario|Gomez|7/10/85
+
+How many teams are in the Bundesliga?
+SELECT Count(*) FROM TEAM
+WHERE League_name = "Bundesliga";
+Returns:
+2

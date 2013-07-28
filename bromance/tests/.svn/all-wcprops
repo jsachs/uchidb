@@ -1,0 +1,95 @@
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/bromance-235-p1/!svn/ver/60/tests
+END
+tests-pager.c
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/bromance-235-p1/!svn/ver/6/tests/tests-pager.c
+END
+tests-utils.c
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/bromance-235-p1/!svn/ver/6/tests/tests-utils.c
+END
+tests-btree.c
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/bromance-235-p1/!svn/ver/60/tests/tests-btree.c
+END
+bigfile.c
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/bromance-235-p1/!svn/ver/26/tests/bigfile.c
+END
+test1.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/bromance-235-p1/!svn/ver/26/tests/test1.cdb
+END
+test2.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/bromance-235-p1/!svn/ver/26/tests/test2.cdb
+END
+test3.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/bromance-235-p1/!svn/ver/26/tests/test3.cdb
+END
+test4.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/bromance-235-p1/!svn/ver/26/tests/test4.cdb
+END
+test5.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/bromance-235-p1/!svn/ver/26/tests/test5.cdb
+END
+temp.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/bromance-235-p1/!svn/ver/33/tests/temp.cdb
+END
+tests
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/bromance-235-p1/!svn/ver/60/tests/tests
+END
+tests-dbrecord.c
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/bromance-235-p1/!svn/ver/6/tests/tests-dbrecord.c
+END
+main.c
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/bromance-235-p1/!svn/ver/26/tests/main.c
+END
+32k.dat
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/bromance-235-p1/!svn/ver/6/tests/32k.dat
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/bromance-235-p1/!svn/ver/26/tests/Makefile
+END

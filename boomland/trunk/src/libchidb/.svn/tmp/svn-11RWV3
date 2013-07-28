@@ -1,0 +1,326 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "chidb.h"
+#include "chidbInt.h"
+#include "util.h"
+#include "dbm.h"
+#include "gen.h"
+#include "gen_inst.h"
+
+
+/* Begin machine code generation
+ *
+ * Parameters:
+ * - stmt: the SQL Statement to be compiled
+ * - dbm: the DBM machine being used
+ *
+ * Returns:
+ * - CHIDB_OK
+ */
+int chidb_Gen(SQLStatement *stmt, DBM *dbm, Schema *schema)
+{
+    switch(stmt->type)
+    {
+        case STMT_SELECT:
+            chidb_Gen_SelectStmt(&(stmt->query.select), dbm, schema);
+            break;
+        case STMT_INSERT:
+            chidb_Gen_InsertStmt(&(stmt->query.insert), dbm, schema);
+            break;
+        case STMT_CREATETABLE:
+            chidb_Gen_CreateTableStmt(&(stmt->query.createTable), dbm, schema);
+            break;
+        case STMT_CREATEINDEX:
+            chidb_Gen_CreateIndexStmt(&(stmt->query.createIndex), dbm, schema);
+            break;
+    }
+    return CHIDB_OK;
+}
+
+
+/* generates machine code for a select statement
+ *
+ *
+ * General program flow:
+ *
+ * 1) Open a cursor into the table to be queried
+ *
+ * 2) For each record in the table:
+ *   - If WHERE evaluates to false, skip to the next record
+ *   - Compute all columns for the current row of the result
+ *   - Callback for the current row of the result
+ *
+ * 3) Close the cursor
+ *
+ */ 
+int chidb_Gen_SelectStmt(SelectStatement *stmt, DBM *dbm, Schema *schema)
+{
+    uint8_t ncols = stmt->select_ncols;
+    Column *cols = stmt->select_cols;
+    int8_t ntables = stmt->from_ntables;
+    char **tables = stmt->from_tables;
+    int8_t nconds = stmt->where_nconds;
+    Condition *conds = stmt->where_conds;
+    
+    uint32_t reg = 0;
+    uint32_t cur = 0;
+    uint32_t jump = 0;
+    
+    Schema_ColumnMap *column_map = (Schema_ColumnMap*)malloc( sizeof(Schema_ColumnMap) * ntables );
+    
+    for(int k = 0; k<ntables; k++) column_map[k] = chidb_getColumnMap(schema, tables[k]);
+
+    int schema_columns = column_map->ncols;
+
+    dbm->root_page = schema->table_root->info.table.rootPage;
+    
+    /* Here, the routine determines if there are or are not conditions.
+     * The generation is much simpler if not selecting columns on conditions.
+     */
+    if(!nconds)
+    {
+        /* First, we add an Integer instruction for the page number where we begin
+         */
+        chidb_Gen_Integer(dbm, 2, reg);
+    
+        /* Next, we perform an OpenRead instruction
+         */
+        chidb_Gen_OpenRead(dbm, cur, reg, schema_columns);
+
+        /* Prepare a Rewind instruction for stepping through columns
+         */
+        jump = (dbm->ninstructions + 3 + ncols);
+        chidb_Gen_Rewind(dbm, cur, jump);
+        
+        /* Now add a Column instruction for every column being selected
+         */
+        jump = dbm->ninstructions;
+        uint32_t n;
+        uint32_t result_row = reg;
+        for(n=0; n < ncols; n++)
+        {
+            int j = chidb_Gen_getColNo(schema_columns, column_map, (cols[n]).name);
+            chidb_Gen_Column(dbm, cur, j, reg);
+            reg++;
+        }
+        
+        /* Now we place these values in a result row
+         */
+        chidb_Gen_ResultRow(dbm, result_row, ncols);
+        
+        /* Finally, go to the next row
+         */
+        chidb_Gen_Next(dbm, cur, jump);
+    }
+    
+    /* otherwise, we have a WHERE clause
+    * this means we need to identify the type of condition
+    * and add its instructions appropriately
+    */
+    else
+    {
+        /* First, store the condition value based on type
+         */
+        switch(conds->op2Type) {
+            case OP2_INT:
+                chidb_Gen_Integer(dbm, conds->op2.integer, reg);
+                reg++;
+                break;
+            case OP2_STR:
+                chidb_Gen_String(dbm, conds->op2.string, reg);
+                reg++;
+                break;
+            case OP2_COL:
+                // TODO: implement this
+                break;
+            default: // occurs is a case of NULL/NOT NULL
+                chidb_Gen_Null(dbm, reg);
+                reg++;
+                break;
+        }
+        /* Next, add an Integer instruction for page number, then OpenRead
+         */
+        chidb_Gen_Integer(dbm, 2, reg);
+        chidb_Gen_OpenRead(dbm, cur, reg, schema_columns);
+        
+        /* Prepare a Rewind instruction for stepping through columns
+         */
+        jump = (dbm->ninstructions + 5 + ncols);
+        chidb_Gen_Rewind(dbm, cur, jump);
+        uint32_t jump_next = dbm->ninstructions;
+        
+        /* Now add a Column and appropriate operator instruction
+         */
+        int k = chidb_Gen_getColNo(schema_columns, column_map, conds->op1.name);
+        chidb_Gen_Column(dbm, cur, k, reg);
+        
+        switch(conds->op)
+        {
+            case OP_EQ:
+                chidb_Gen_Ne(dbm, 0, jump-1, reg);
+                break;
+            case OP_NE:
+                chidb_Gen_Eq(dbm, 0, jump-1, reg);
+                break;
+            case OP_LT:
+                chidb_Gen_Ge(dbm, 0, jump-1, reg);
+                break;
+            case OP_GT:
+                chidb_Gen_Le(dbm, 0, jump-1, reg);
+                break;
+            case OP_LTE:
+                chidb_Gen_Gt(dbm, 0, jump-1, reg);
+                break;
+            case OP_GTE:
+                chidb_Gen_Lt(dbm, 0, jump-1, reg);
+                break;
+            case OP_ISNULL:
+                chidb_Gen_Ne(dbm, 0, jump-1, reg);
+                break;
+            case OP_ISNOTNULL:
+                chidb_Gen_Eq(dbm, 0, jump-1, reg);
+                break;
+        }
+        
+        /* Now add a Column instruction for every column being selected
+         */
+        uint32_t n;
+        uint32_t result_row = reg;
+        for(n=0; n < ncols; n++)
+        {
+            int j = chidb_Gen_getColNo(schema_columns, column_map, (cols[n]).name);
+            chidb_Gen_Column(dbm, cur, j, reg);
+            reg++;
+        }
+        /* Now we place these values in a result row
+         */
+        chidb_Gen_ResultRow(dbm, result_row, ncols);
+        
+        /* Finally, go to the next row
+         */
+        chidb_Gen_Next(dbm, cur, jump_next);    
+    }
+    
+    /* Now to finish the instructions, Close and Halt
+     * TODO: error checking for Halt
+     */
+    chidb_Gen_Close(dbm, cur);
+    chidb_Gen_Halt(dbm, 0, NULL);
+    
+    return CHIDB_OK;
+}
+
+
+/* Generates machine code for an insert statement
+ */
+int chidb_Gen_InsertStmt(InsertStatement *stmt, DBM *dbm, Schema *schema)
+{
+    char *table = stmt->table;
+    uint8_t nvalues = stmt->nvalues;
+    Value *values = stmt->values;
+    
+    uint32_t reg  = 0;
+    uint32_t cur  = 0;
+    uint32_t jump = 0;
+    
+    Schema_ColumnMap *column_map = (Schema_ColumnMap*)malloc(sizeof(Schema_ColumnMap));
+    column_map = chidb_getColumnMap(schema, table);
+    int schema_columns = column_map->ncols;
+    int schema_key_col = column_map->primary_col;
+    
+    dbm->root_page = schema->table_root->info.table.rootPage;
+    dbm->columns = column_map;
+    
+    /* GENERAL FLOW:
+     *
+     * Integer for the right page
+     * OpenWrite to correctly insert
+     * 
+     * Use Integer/String/etc. to load in values being inserted
+     *
+     * MakeRecord to create a record with these values
+     *
+     * Insert the records appropriately
+     *
+     */
+    chidb_Gen_Integer(dbm, 2, reg); // the Table root page
+    
+    chidb_Gen_OpenWrite(dbm, cur, reg, schema_columns);
+    reg++;
+    
+    /* Store all of the values being inserted
+     */
+    int i;
+    uint32_t start_reg = reg;
+    for(i=0; i<nvalues; i++)
+    {
+        switch(values[i].type) {
+            case INS_INT:
+                chidb_Gen_Integer(dbm, values[i].val.integer, reg);
+                break;
+            case INS_STR:
+                chidb_Gen_String(dbm, values[i].val.string, reg);
+                break;
+            case INS_NULL:
+                chidb_Gen_Null(dbm, reg);
+                break;
+        }
+        reg++;
+    }
+    /* now, determine the column of the key
+     */
+    uint32_t key_reg = start_reg + schema_key_col;
+    
+    /* now, create a new record for these values
+     */
+    chidb_Gen_MakeRecord(dbm, start_reg, nvalues, reg);
+    
+    /* at this point, we are ready with our database record
+     * we now need to ready an index record
+     */
+    chidb_Gen_InsertEntry(dbm, cur, reg, key_reg);
+    
+    chidb_Gen_Close(dbm, cur);
+
+    chidb_Gen_Halt(dbm, 0, NULL);
+    
+    return CHIDB_OK;
+}
+
+
+/* Generates machine code for a create table statement
+ */
+int chidb_Gen_CreateTableStmt(CreateTableStatement *stmt, DBM *dbm, Schema *schema)
+{
+    return CHIDB_OK;
+}
+
+
+/* Generates machine code for a create index statement
+ */
+int chidb_Gen_CreateIndexStmt(CreateIndexStatement *stmt, DBM *dbm, Schema *schema)
+{
+    return CHIDB_OK;
+}
+
+/* Get the appropriate column number from a schema
+ */
+int chidb_Gen_getColNo(int ncols, Schema_ColumnMap *cmap, char *name)
+{
+    int k;
+    for(k=0; k<ncols; k++){
+        if(!strcmp((cmap->cols[k]).name, name))
+            return k;
+    }
+    return 0;
+}
+
+/* Here is a routine for generating the cross-join of all selected tables
+ */
+
+
+
+
+
+

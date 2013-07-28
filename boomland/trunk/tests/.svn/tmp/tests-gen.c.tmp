@@ -1,0 +1,395 @@
+#include <stdlib.h>
+#include "CUnit/Basic.h"
+#include "libchidb/btree.h"
+#include "libchidb/dbm.h"
+#include "libchidb/util.h"
+#include "libchidb/parser.h"
+#include "libchidb/gen.h"
+#include "libchidb/schemaloader.h"
+
+#define TESTFILE_1 ("example_dbs/volatile.singletable_singlepage.cdb")
+#define TESTFILE_2 ("example_dbs/tableindex_singlepage.cdb")
+#define TESTFILE_3 ("example_dbs/tableindex_multipage.cdb")
+
+
+void test_print_instructions(DBM *dbm)
+{
+    int i;
+    for(i=0; i < dbm->ninstructions; i++){
+        printf("\n\t%02d : %02d - %-3d | %-3d | %-3d",
+            (dbm->instructions[i]).id,
+            (dbm->instructions[i]).op,
+            (dbm->instructions[i]).p1,
+            (dbm->instructions[i]).p2,
+            (dbm->instructions[i]).p3);
+    }
+    printf("\n");
+    return;
+}
+
+void test_Select_1()
+{
+  int rc;
+  chidb *db;
+  
+  db = malloc(sizeof(chidb));
+  rc = chidb_Btree_open(TESTFILE_1, db, &db->bt);
+  CU_ASSERT(rc == CHIDB_OK);
+
+  DBM *dbm;
+  rc = chidb_DBM_create(db, &dbm);
+  CU_ASSERT(rc == CHIDB_OK);
+
+  const char *sql = "SELECT code, name, prof, dept FROM courses;";
+  printf("\n\t%s", sql);
+  SQLStatement *stmt = (SQLStatement *)malloc(sizeof(SQLStatement));
+  chidb_parser(sql, &stmt);
+  
+  Schema *schema = (Schema *) malloc(sizeof(Schema));
+  chidb_loadSchema(db, &schema);
+  
+  chidb_Gen(stmt, dbm, schema);
+    
+  test_print_instructions(dbm);
+
+  // Running the program...
+  do {
+    rc = chidb_DBM_execute(dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    if (dbm->returned) {
+      printf("\n\t");
+      chidb_DBRecord_print(dbm->result);
+      fflush(stdout);
+    }
+  } while (CHIDB_OK == rc && !dbm->halted);
+  printf("\n");
+
+  rc = chidb_DBM_destroy(dbm);
+  CU_ASSERT(rc == CHIDB_OK);
+
+  rc = chidb_Btree_close(db->bt);
+  CU_ASSERT(rc == CHIDB_OK);
+  free(db);
+
+  return;
+}
+
+void test_Select_2()
+{
+  int rc;
+  chidb *db;
+
+  db = malloc(sizeof(chidb));
+  rc = chidb_Btree_open(TESTFILE_1, db, &db->bt);
+  CU_ASSERT(rc == CHIDB_OK);
+
+  DBM *dbm;
+  rc = chidb_DBM_create(db, &dbm);
+  CU_ASSERT(rc == CHIDB_OK);
+  
+  const char *sql = "SELECT code, name, prof, dept FROM courses WHERE dept = 42;";
+  SQLStatement *stmt = (SQLStatement *)malloc(sizeof(SQLStatement));
+  chidb_parser(sql, &stmt);
+
+  Schema *schema = (Schema *) malloc(sizeof(Schema));
+  chidb_loadSchema(db, &schema);
+
+  chidb_Gen(stmt, dbm, schema);
+
+  test_print_instructions(dbm);
+
+  // Running the program...
+  printf("\n\tResults:");
+  do {
+    rc = chidb_DBM_execute(dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    if (dbm->returned) {
+      printf("\n\t");
+      chidb_DBRecord_print(dbm->result);
+      fflush(stdout);
+    }
+  } while (CHIDB_OK == rc && !dbm->halted);
+  printf("\n");
+
+  rc = chidb_DBM_destroy(dbm);
+  CU_ASSERT(rc == CHIDB_OK);
+
+  rc = chidb_Btree_close(db->bt);
+  CU_ASSERT(rc == CHIDB_OK);
+  free(db);
+
+  return;
+}
+
+void test_Select_3()
+{
+    int rc;
+    chidb *db;
+    
+    db = malloc(sizeof(chidb));
+    rc = chidb_Btree_open(TESTFILE_2, db, &db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+    
+    DBM *dbm;
+    rc = chidb_DBM_create(db, &dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+    
+    const char *sql = "SELECT textcode FROM numbers WHERE altcode = 20300;";
+    SQLStatement *stmt = (SQLStatement *)malloc(sizeof(SQLStatement));
+    chidb_parser(sql, &stmt);
+    
+    Schema *schema = (Schema *) malloc(sizeof(Schema));
+    chidb_loadSchema(db, &schema);
+    
+    chidb_Gen(stmt, dbm, schema);
+    
+    test_print_instructions(dbm);
+    
+    // Running the program...
+    printf("\n\tResults:");
+    do {
+      rc = chidb_DBM_execute(dbm);
+      CU_ASSERT(rc == CHIDB_OK);
+    
+      if (dbm->returned) {
+        printf("\n\t");
+        chidb_DBRecord_print(dbm->result);
+        fflush(stdout);
+      }
+    } while (CHIDB_OK == rc && !dbm->halted);
+    printf("\n");
+    
+    rc = chidb_DBM_destroy(dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+    
+    rc = chidb_Btree_close(db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+    free(db);
+    
+    return;
+}
+
+void test_Select_4()
+{
+    int rc;
+    chidb *db;
+
+    db = malloc(sizeof(chidb));
+    rc = chidb_Btree_open(TESTFILE_3, db, &db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    DBM *dbm;
+    rc = chidb_DBM_create(db, &dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    const char *sql = "SELECT code, textcode, altcode FROM numbers;";
+    SQLStatement *stmt = (SQLStatement *)malloc(sizeof(SQLStatement));
+    chidb_parser(sql, &stmt);
+
+    Schema *schema = (Schema *) malloc(sizeof(Schema));
+    chidb_loadSchema(db, &schema);
+
+    chidb_Gen(stmt, dbm, schema);
+
+    test_print_instructions(dbm);
+
+    // Running the program...
+    printf("\n\tResults:");
+    do {
+      rc = chidb_DBM_execute(dbm);
+      CU_ASSERT(rc == CHIDB_OK);
+
+      if (dbm->returned) {
+        printf("\n\t");
+        chidb_DBRecord_print(dbm->result);
+        fflush(stdout);
+      }
+    } while (CHIDB_OK == rc && !dbm->halted);
+    printf("\n");
+
+    rc = chidb_DBM_destroy(dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    rc = chidb_Btree_close(db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+    free(db);
+
+    return;
+}
+
+void test_Select_5()
+{
+    int rc;
+    chidb *db;
+
+    db = malloc(sizeof(chidb));
+    rc = chidb_Btree_open(TESTFILE_3, db, &db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    DBM *dbm;
+    rc = chidb_DBM_create(db, &dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    const char *sql = "SELECT code FROM numbers WHERE code > 3000;";
+    SQLStatement *stmt = (SQLStatement *)malloc(sizeof(SQLStatement));
+    chidb_parser(sql, &stmt);
+
+    Schema *schema = (Schema *) malloc(sizeof(Schema));
+    chidb_loadSchema(db, &schema);
+
+    chidb_Gen(stmt, dbm, schema);
+
+    test_print_instructions(dbm);
+
+    // Running the program...
+    printf("\n\tResults:");
+    do {
+      rc = chidb_DBM_execute(dbm);
+      CU_ASSERT(rc == CHIDB_OK);
+
+      if (dbm->returned) {
+        printf("\n\t");
+        chidb_DBRecord_print(dbm->result);
+        fflush(stdout);
+      }
+    } while (CHIDB_OK == rc && !dbm->halted);
+    printf("\n");
+
+    rc = chidb_DBM_destroy(dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    rc = chidb_Btree_close(db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+    free(db);
+
+    return;
+}
+
+
+void test_Insert_1()
+{
+    int rc;
+    chidb *db;
+    
+    db = malloc(sizeof(chidb));
+    rc = chidb_Btree_open(TESTFILE_1, db, &db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+    
+    DBM *dbm;
+    rc = chidb_DBM_create(db, &dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+    
+    const char *sql = "INSERT INTO courses VALUES (32000, \"Graduate Algorithms\", 60, 42);";
+    SQLStatement *stmt = (SQLStatement *)malloc(sizeof(SQLStatement));
+    chidb_parser(sql, &stmt);
+    
+    Schema *schema = (Schema *) malloc(sizeof(Schema));
+    chidb_loadSchema(db, &schema);
+    
+    chidb_Gen(stmt, dbm, schema);
+    test_print_instructions(dbm);
+
+    // Running the program...
+    printf("\n\tResults:");
+    do {
+      rc = chidb_DBM_execute(dbm);
+      CU_ASSERT(rc == CHIDB_OK);
+    } while (CHIDB_OK == rc && !dbm->halted);
+    printf("\n");
+
+    rc = chidb_DBM_destroy(dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+    
+    rc = chidb_Btree_close(db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+    free(db);
+    
+    return;
+}
+
+void test_Insert_2()
+{
+    int rc;
+    chidb *db;
+
+    db = malloc(sizeof(chidb));
+    rc = chidb_Btree_open(TESTFILE_2, db, &db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    DBM *dbm;
+    rc = chidb_DBM_create(db, &dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    const char *sql = "INSERT INTO courses VALUES(400, 'foo400', 20400);";
+    SQLStatement *stmt = (SQLStatement *)malloc(sizeof(SQLStatement));
+    chidb_parser(sql, &stmt);
+
+    Schema *schema = (Schema *) malloc(sizeof(Schema));
+    chidb_loadSchema(db, &schema);
+
+    chidb_Gen(stmt, dbm, schema);
+
+    test_print_instructions(dbm);
+
+    rc = chidb_DBM_destroy(dbm);
+    CU_ASSERT(rc == CHIDB_OK);
+
+    rc = chidb_Btree_close(db->bt);
+    CU_ASSERT(rc == CHIDB_OK);
+    free(db);
+
+    return;
+}
+
+
+
+int init_tests_gen() {
+    CU_pSuite genTests = NULL;
+
+    /* add a suite to the registry */
+    genTests = CU_add_suite("gen", NULL, NULL);
+    if (NULL == genTests) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+
+    if ((NULL == CU_add_test(genTests, "Simple select code generation", test_Select_1))) {
+    CU_cleanup_registry();
+    return CU_get_error();
+    }
+    
+    if ((NULL == CU_add_test(genTests, "Simple select code generation with WHERE", test_Select_2))) {
+    CU_cleanup_registry();
+    return CU_get_error();
+    }
+    
+    if ((NULL == CU_add_test(genTests, "Simple select code generation on small numbers", test_Select_3))) {
+    CU_cleanup_registry();
+    return CU_get_error();
+    }
+    
+    if ((NULL == CU_add_test(genTests, "Simple select code generation on large numbers", test_Select_4))) {
+    CU_cleanup_registry();
+    return CU_get_error();
+    }
+    
+    if ((NULL == CU_add_test(genTests, "Simple select code generation on large numbers with WHERE", test_Select_5))) {
+    CU_cleanup_registry();
+    return CU_get_error();
+    }
+    
+    if ((NULL == CU_add_test(genTests, "Simple insert code generation", test_Insert_1))) {
+    CU_cleanup_registry();
+    return CU_get_error();
+    }
+    
+    if ((NULL == CU_add_test(genTests, "Simple insert code generation on numbers", test_Insert_2))) {
+    CU_cleanup_registry();
+    return CU_get_error();
+    }
+    
+    return CU_get_error();
+}
+

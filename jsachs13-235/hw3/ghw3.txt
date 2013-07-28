@@ -1,0 +1,129 @@
+1.
+
+SELECT AppointmentID
+FROM Appointment
+WHERE Physician IN (
+SELECT EmployeeID
+FROM Physician, Department
+WHERE EmployeeID = Head
+);
+
+AppointmentID
+-------------
+46846589     
+59871321     
+86213939
+
+2.
+
+SELECT Name, Start, julianday(date(End))-julianday(date(Start)) Duration
+FROM Patient JOIN Stay ON Patient.SSN = Stay.Patient
+WHERE Duration > 1;
+
+Name        Start       Duration  
+----------  ----------  ----------
+John Smith  2008-05-01  3.0       
+Random J.   2008-05-03  11.0   
+
+3.
+
+SELECT Name
+FROM Physician JOIN Trained_In ON EmployeeID = Physician
+GROUP BY Name
+HAVING Count(*) = (
+SELECT Max(Certs) MaxCerts
+FROM
+(SELECT Count(*) Certs
+FROM Physician JOIN Trained_In ON EmployeeID = Physician
+GROUP BY Name)
+);
+
+Name      
+----------
+John Wen 
+
+4.
+
+SELECT PName, Brand, Count(*) Scripts
+FROM
+(SELECT Name PName, Medication
+FROM Physician JOIN Prescribes ON EmployeeID = Physician)
+JOIN Medication ON Medication = Code
+GROUP BY PName, Brand;
+
+PName        Brand       Count(*)  
+-----------  ----------  ----------
+John Dorian  X           1         
+Molly Clock  Foo Labs    2  
+
+5. not sure about this
+
+SELECT Name
+FROM Nurse JOIN (
+SELECT *
+FROM On_Call O JOIN (
+SELECT *
+FROM Room
+WHERE Number = 123) R ON O.BlockFloor = R.BlockFloor 
+AND O.BlockCode = R.BlockCode) ON EmployeeID = Nurse;
+
+Name           
+---------------
+Laverne Roberts
+Paul Flowers 
+
+6.
+
+SELECT Name
+FROM
+(SELECT Name, Physician P, Treatment T, CertificationDate CD, CertificationExpires CE
+FROM Physician JOIN Trained_In
+ON EmployeeID = Physician) JOIN Undergoes ON P = Physician AND T = Procedure
+WHERE Datetime(CE) < Datetime(Date);
+
+Name        
+------------
+Todd Quinlan
+
+7.
+SELECT AppointmentID, PatName, PSSN SSN, PhysName, PEmployeeID EmployeeID, Name NurseName, PrepNurse NurseID, Start, End
+FROM Nurse JOIN
+(SELECT AppointmentID, PatName, PSSN, Name PhysName, Physician PEmployeeID, PrepNurse, Start, End
+FROM Physician JOIN
+(SELECT AppointmentID, Name PatName, SSN PSSN, Physician, PrepNurse, Start, End
+FROM Appointment JOIN Patient
+ON SSN = Patient
+WHERE Physician = PCP) ON EmployeeID = Physician) ON Nurse.EmployeeID = PrepNurse;
+
+AppointmentID  PatName     SSN         PhysName     EmployeeID  NurseName       NurseID     Start             End             
+-------------  ----------  ----------  -----------  ----------  --------------  ----------  ----------------  ----------------
+13216584       John Smith  100000001   John Dorian  1           Carla Espinosa  101         2008-04-24 10:00  2008-04-24 11:00
+26548913       Grace Ritc  100000002   Elliot Reid  2           Carla Espinosa  101         2008-04-24 10:00  2008-04-24 11:00
+36549879       John Smith  100000001   John Dorian  1           Laverne Robert  102         2008-04-25 10:00  2008-04-25 11:00
+69879231       Random J.   100000003   Elliot Reid  2           Paul Flowers    103         2008-04-26 11:00  2008-04-26 12:00
+93216548       Grace Ritc  100000002   Elliot Reid  2           Carla Espinosa  101         2008-04-27 10:00  2008-04-27 11:00
+
+8.
+
+SELECT Name
+FROM Physician JOIN (
+SELECT Physician, Procedure
+FROM Undergoes
+EXCEPT
+SELECT Physician, Treatment
+FROM Trained_In) ON EmployeeID = Physician;
+
+Name            
+----------------
+Christopher Turk
+
+/* query 1   3/ 3 */
+/* query 2   3/ 3 */
+/* query 3   3/ 3 */
+/* query 4   3/ 3 */
+/* query 5   3/ 3 */
+/* query 6   3/ 3 */
+/* query 7   3/ 3 */
+/* query 8   3/ 3 */
+/* svn       1/ 1 */
+/* total    25/25 */

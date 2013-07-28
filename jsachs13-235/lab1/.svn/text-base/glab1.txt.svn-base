@@ -1,0 +1,28 @@
+1.
+sqlite> SELECT * FROM Package
+   ...> WHERE Shipment = 3;
+
+2.
+sqlite> SELECT * FROM Package
+   ...> WHERE Shipment = 3
+   ...> AND Weight > 10;
+
+3.
+sqlite> SELECT Contents, Weight FROM Package;
+
+4.
+sqlite> SELECT * FROM Shipment
+   ...> WHERE Date IS NULL;
+
+5.
+sqlite> INSERT INTO Client(AccountNumber, Name)
+   ...> VALUES (20, "Donbot");
+
+/* #grader -- You don't need to include the shell prompts -- */
+/* q1      2/ 2 */
+/* q2      2/ 2 */
+/* q3      2/ 2 */
+/* q4      2/ 2 */
+/* q5      2/ 2 */
+/* svn     1/ 1 */
+/* #total 11/11 */

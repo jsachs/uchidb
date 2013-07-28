@@ -1,0 +1,16 @@
+README for boomland:
+
+Improved SELECT:
+    The entirety of these changes are reflected in the gen.c file.  The chidb_Gen_SelectStmt
+function has been rewritten, and supplemented with a few helper functions in the same source file.
+On single tables, SELECT * and multiple WHERE conditions should work fine.  On multiple tables,
+simple JOINs appear to work fine, with occasional strange issues.  Making the table.name format
+work when not implied was not really attempted.
+
+Pushing Sigmas:
+    Most of pushing sigmas is contained in sigmas.c, which is accessed by a function call in gen.c
+
+Index Implementation:
+
+Heuristics:
+

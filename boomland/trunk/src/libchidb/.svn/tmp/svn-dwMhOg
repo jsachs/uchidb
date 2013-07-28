@@ -1,0 +1,176 @@
+#ifndef DBM_H_
+#define DBM_H_
+
+#include "chidb.h"
+#include "chidbInt.h"
+#include "record.h"
+#include "util.h"
+
+
+
+// Forward declarations
+typedef struct DBM DBM;
+typedef struct DBMCursor DBMCursor;
+typedef struct DBMRegister DBMRegister;
+typedef struct DBMInstruction DBMInstruction;
+
+
+// Map instruction names to codes
+typedef enum {
+  _OpenRead_, _OpenWrite_, _Close_,
+  _Rewind_, _Next_, _Prev_, _Seek_, _SeekGt_, _SeekGe_,
+  _Column_, _Key_, _Integer_, _String_, _Null_, _ResultRow_,
+  _MakeRecord_, _Insert_,
+  _Eq_, _Ne_, _Lt_, _Le_, _Gt_, _Ge_,
+  _IdxGt_, _IdxGe_, _IdxLt_, _IdxLe_, _IdxKey_, _IdxInsert_,
+  _CreateTable_, _CreateIndex_,
+  _SCopy_, _Halt_
+} instruction_code;
+
+
+// Instructions bind an operation name to some operands
+// A program consists of an array of these instructions
+struct DBMInstruction {
+  DBM *machine;        // Pointer to machine cursor refers to
+  uint32_t id;         // Instruction identifier (address for jumping)
+  instruction_code op; // Instruction code
+  int32_t  p1;         // First operand
+  int32_t  p2;         // Second operand
+  int32_t  p3;         // Third operand
+  void *p4;            // Fourth operand
+};
+
+
+// Instructions may modify registers, which hold integer, string, or NULL values
+#define DBM_NULL_REGISTER_TYPE     0
+#define DBM_INTEGER_REGISTER_TYPE  1
+#define DBM_SMALLINT_REGISTER_TYPE 2
+#define DBM_BYTE_REGISTER_TYPE     3
+#define DBM_STRING_REGISTER_TYPE   4
+
+struct DBMRegister {
+  DBM *machine;       // Pointer to machine register refers to
+  uint32_t id;        // Register identifier
+  uint8_t type;       // Type of register (integer, string, or NULL)
+  union {             // NULL type doesn't get anything...
+    int32_t integer;  // Signed 32-bit integer
+    int16_t smallint; // Signed 16-bit integer
+    int8_t byte;      // Signed 8-bit integer
+    struct {          // String or binary data
+      size_t len;     // Length of data
+      char *data;     // Data stored on heap
+    } string;
+  } fields;
+};
+
+
+// Can open a B-tree node as read-only or read-write
+#define DBM_READONLY  0
+#define DBM_READWRITE 1
+
+struct DBMCursor {
+  DBM *machine;     // Pointer to machine cursor refers to
+  uint32_t id;      // Cursor identifier
+  uint8_t mode;     // Read-only or read-write access
+  uint32_t ncols;   // Number of columns in table
+  uint32_t cell_id; // Index in DBM cell array
+};
+
+
+// Wrapper for B-Tree cells
+// Keeps a pointer to the B-Tree node within the DBM
+typedef struct {
+  BTreeCell entry;
+  BTreeNode *node;
+} DBMCell;
+
+// Instantaneous configuration of the machine itself
+// Instructions and registers are stored on the heap
+struct DBM {
+  uint32_t pc;                  // Program counter (id of current instruction)
+  DBMInstruction *instructions; // Program is a list of instructions
+  uint32_t ninstructions;       // Number of instructions
+
+  DBMRegister *registers;       // Registers and their values
+  uint32_t nregisters;          // Number of registers
+
+  DBMCursor *cursors;           // Cursors and their nodes
+  uint32_t ncursors;            // Number of cursors
+
+  chidb *db;                    // Database - should point to B-Tree file and contain schema
+  BTreeNode **nodes;            // B-Tree nodes
+  uint32_t nnodes;              // Number of B-Tree nodes
+
+  DBMCell *cells;               // B-Tree cell wrappers (sorted)
+  uint32_t ncells;              // Number of B-Tree cells
+
+  bool jumped;                  // True if execution resulted in a jump
+  bool returned;                // True if ResultRow returns
+  bool halted;                  // True if machine not halted
+
+  DBRecord *result;
+
+  uint32_t err;                 // Error code
+  char *err_msg;                // Error message
+};
+
+
+
+// Public API
+int chidb_DBM_create(chidb *db, DBM **machine);
+int chidb_DBM_destroy(DBM *machine);
+int chidb_DBM_add_instruction(DBM *machine, DBMInstruction *instruction);
+int chidb_DBM_execute(DBM *machine);
+
+// Internal state
+int chidb_DBM_grab_cells(DBM *machine);
+int chidb_DBM_jump(DBM *machine, uint32_t instruction_id);
+int chidb_DBM_find_instruction(DBM *machine, uint32_t instruction_id, DBMInstruction **instruction);
+int chidb_DBM_find_register(DBM *machine, uint32_t reg_id, DBMRegister **reg);
+int chidb_DBM_create_register(DBM *machine, uint32_t reg_id, DBMRegister **reg);
+int chidb_DBM_find_or_create_register(DBM *machine, uint32_t reg_id, DBMRegister **reg);
+int chidb_DBM_free_register(DBMRegister *reg);
+int chidb_DBM_find_cursor(DBM *machine, uint32_t cursor_id, DBMCursor **cursor);
+int chidb_DBM_create_cursor(DBM *machine, uint32_t cursor_id, DBMCursor **cursor);
+int chidb_DBM_find_or_create_cursor(DBM *machine, uint32_t cursor_id, DBMCursor **cursor);
+int chidb_DBM_find_node(DBM *machine, npage_t page_num, BTreeNode **node);
+
+// Instructions
+int chidb_DBM_execute_Open(DBM *machine, DBMCursor *cursor, DBMRegister *reg, uint32_t ncols, uint8_t mode);
+int chidb_DBM_execute_OpenRead(DBM *machine, DBMCursor *cursor, DBMRegister *reg, uint32_t ncols);
+int chidb_DBM_execute_OpenWrite(DBM *machine, DBMCursor *cursor, DBMRegister *reg, uint32_t ncols);
+int chidb_DBM_execute_Close(DBM *machine, DBMCursor *cursor);
+int chidb_DBM_execute_Rewind(DBM *machine, DBMCursor *cursor, uint32_t instruction_id);
+int chidb_DBM_execute_Next(DBM *machine, DBMCursor *cursor, uint32_t instruction_id);
+int chidb_DBM_execute_Prev(DBM *machine, DBMCursor *cursor, uint32_t instruction_id);
+int chidb_DBM_execute_Seek(DBM *machine, DBMCursor *cursor, key_t key, uint32_t instruction_id);
+int chidb_DBM_execute_SeekGt(DBM *machine, DBMCursor *cursor, key_t key, uint32_t instruction_id);
+int chidb_DBM_execute_SeekGe(DBM *machine, DBMCursor *cursor, key_t key, uint32_t instruction_id);
+int chidb_DBM_execute_Column(DBM *machine, DBMCursor *cursor, int32_t col_num, DBMRegister *reg);
+int chidb_DBM_execute_Key(DBM *machine, DBMCursor cursor, DBMRegister *reg);
+int chidb_DBM_execute_Integer(DBM *machine, DBMRegister *reg, int32_t integer);
+int chidb_DBM_execute_String(DBM *machine, DBMRegister *reg, void *data, size_t len);
+int chidb_DBM_execute_Null(DBM *machine, DBMRegister *reg);
+int chidb_DBM_execute_ResultRow(DBM *machine, uint32_t reg_id, int32_t ncols);
+// int chidb_DBM_execute_MakeRecord(DBM *machine, ...);
+// int chidb_DBM_execute_Insert(DBM *machine, ...);
+int chidb_DBM_execute_Eq(DBM *machine, DBMRegister reg1, DBMRegister reg2, uint32_t instruction_id);
+int chidb_DBM_execute_Ne(DBM *machine, DBMRegister reg1, DBMRegister reg2, uint32_t instruction_id);
+int chidb_DBM_execute_Lt(DBM *machine, DBMRegister reg1, DBMRegister reg2, uint32_t instruction_id);
+int chidb_DBM_execute_Le(DBM *machine, DBMRegister reg1, DBMRegister reg2, uint32_t instruction_id);
+int chidb_DBM_execute_Gt(DBM *machine, DBMRegister reg1, DBMRegister reg2, uint32_t instruction_id);
+int chidb_DBM_execute_Ge(DBM *machine, DBMRegister reg1, DBMRegister reg2, uint32_t instruction_id);
+// int chidb_DBM_execute_IdxGt(DBM *machine, ...);
+// int chidb_DBM_execute_IdxGe(DBM *machine, ...);
+// int chidb_DBM_execute_IdxLt(DBM *machine, ...);
+// int chidb_DBM_execute_IdxLe(DBM *machine, ...);
+// int chidb_DBM_execute_IdxKey(DBM *machine, ...);
+// int chidb_DBM_execute_IdxInsert(DBM *machine, ...);
+// int chidb_DBM_execute_CreateTable(DBM *machine, ...);
+// int chidb_DBM_execute_CreateIndex(DBM *machine, ...);
+// int chidb_DBM_execute_SCopy(DBM *machine, ...);
+int chidb_DBM_execute_Halt(DBM *machine, uint32_t err, const char *err_msg);
+
+
+
+#endif

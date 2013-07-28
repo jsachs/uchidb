@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/boomland-235-p2/!svn/ver/97/trunk
+END
+chidb.sh
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/boomland-235-p2/!svn/ver/85/trunk/chidb.sh
+END
+gdb.sh
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/boomland-235-p2/!svn/ver/84/trunk/gdb.sh
+END
+test.sh
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/boomland-235-p2/!svn/ver/82/trunk/test.sh
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/boomland-235-p2/!svn/ver/70/trunk/Makefile
+END

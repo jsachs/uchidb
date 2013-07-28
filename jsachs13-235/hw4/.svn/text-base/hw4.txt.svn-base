@@ -1,0 +1,201 @@
+1)
+----------------------------------------------------
+
+CREATE TABLE Twit(
+  username TEXT PRIMARY KEY,
+  about TEXT
+  whenJoined DATETIME
+);
+
+CREATE TABLE Tweet(
+  when DATETIME,
+  body TEXT,
+  degreeOfInanity INT,
+  username TEXT NOT NULL,
+  repliesTo_user TEXT,
+  repliesTo_when DATETIME,
+  PRIMARY KEY(username, when),
+  FOREIGN KEY(username) REFERENCES Twit(username),
+  FOREIGN KEY(repliesTo_user) REFERENCES Tweet(username),
+  FOREIGN KEY(repliesTo_when) REFERENCES Tweet(when)
+);
+
+CREATE TABLE DirectMsg(
+  when DATETIME,
+  body TEXT,
+  from_user TEXT NOT NULL,
+  to_user TEXT NOT NULL,
+  PRIMARY KEY(from_user, to_user, when),
+  FOREIGN KEY(from_user) REFERENCES Twit(username),
+  FOREIGN KEY(to_user) REFERENCES Twit(username)
+);
+
+CREATE TABLE follows(
+  follower_user TEXT,
+  followee_user TEXT,
+  PRIMARY KEY(follower_user, followee_user),
+  FOREIGN KEY(follower_user) REFERENCES Twit(username),
+  FOREIGN KEY(followee_user) REFERENCES Twit(username)
+);
+
+CREATE TABLE retweets
+  retweet_user  TEXT,
+  retweet_when DATETIME,
+  tweet_user TEXT,
+  tweet_when DATETIME,
+  PRIMARY KEY(retweet_user, tweet_user, tweet_when),
+  FOREIGN KEY(retweet_user) REFERENCES Twit(retweet_user),
+  FOREIGN KEY(tweet_user) REFERENCES Tweet(username),
+  FOREIGN KEY(tweet_when) REFERENCES Tweet(when)
+);
+
+2)
+----------------------------------------------------
+
+CREATE TABLE User(
+  username TEXT PRIMARY KEY,
+  email TEXT,
+  whenJoined DATETIME
+);
+
+CREATE TABLE WallPost(
+  when DATETIME,
+  username TEXT NOT NULL,
+  PRIMARY KEY(username, when),
+  FOREIGN KEY(username) REFERENCES User(username)
+);
+
+CREATE TABLE StatusUpdate(
+  text TEXT,
+  when DATETIME,
+  username TEXT NOT NULL,
+  PRIMARY KEY(username, when),
+  FOREIGN KEY(username) REFERENCES WallPost(username),
+  FOREIGN KEY(when) REFERENCES WallPost(when)
+);
+
+CREATE TABLE Photo(
+  image DATA,
+  caption TEXT,
+  when DATETIME,
+  username TEXT NOT NULL,
+  PRIMARY KEY(username, when),
+  FOREIGN KEY(username) REFERENCES WallPost(username),
+  FOREIGN KEY(when) REFERENCES WallPost(when)
+);
+
+CREATE TABLE Video(
+  video DATA,
+  caption TEXT,
+  when DATETIME,
+  username TEXT NOT NULL,
+  PRIMARY KEY(username, when),
+  FOREIGN KEY(username) REFERENCES WallPost(username),
+  FOREIGN KEY(when) REFERENCES WallPost(when)
+);
+
+CREATE TABLE friend(
+  user_1 TEXT,
+  user_2 TEXT,
+  when DATETIME,
+  PRIMARY KEY(user_1, user_2),
+  FOREIGN KEY(user_1) REFERENCES User(username),
+  FOREIGN KEY(user_2) REFERENCES User(username)
+);
+
+CREATE TABLE likes(
+  liker TEXT,
+  poster TEXT,
+  when DATETIME,
+  PRIMARY KEY(liker, poster, when),
+  FOREIGN KEY(liker) REFERENCES User(username),
+  FOREIGN KEY(poster) REFERENCES WallPost(username),
+  FOREIGN KEY(when) REFERENCES WallPost(when)
+);
+
+CREATE TABLE comments(
+  commenter TEXT,
+  comment_when DATETIME,
+  poster TEXT,
+  post_when DATETIME,
+  text TEXT,
+  PRIMARY KEY(commenter, poster, post_when, comment_when),
+  FOREIGN KEY(commenter) REFERENCES User(username),
+  FOREIGN KEY(poster) REFERENCES WallPost(username),
+  FOREIGN KEY(post_when) REFERENCES WallPost(when)
+);
+
+
+4)
+----------------------------------------------------
+
+CREATE TABLE Actor(
+  name TEXT PRIMARY KEY,
+  DOB DATETIME
+);
+
+CREATE TABLE Movie(
+title TEXT PRIMARY KEY,
+release DATETIME,
+);
+
+CREATE TABLE Reviewer(
+  username TEXT PRIMARY KEY,
+  whenJoined DATETIME
+);
+
+CREATE TABLE Reviwer(
+  username TEXT PRIMARY KEY,
+  whenJoined DATETIME
+);
+
+CREATE TABLE User(
+  username TEXT PRIMARY KEY,
+  name TEXT,
+  FOREIGN KEY(username) REFERENCES Reviewer(username)
+);
+
+CREATE TABLE Critic(
+  username TEXT PRIMARY KEY,
+  name TEXT,
+  publication TEXT,
+  FOREIGN KEY(username) REFERENCES Reviewer(username)
+);
+
+CREATE TABLE Cinema(
+  cinID INT PRIMARY KEY,
+  address TEXT,
+  name TEXT
+);
+
+CREATE TABLE Review(
+  text TEXT,
+  rating INT,
+  when DATETIME,
+  movie_title TEXT,
+  reviewer TEXT,
+  PRIMARY KEY(movie_title, reviewer),
+  FOREIGN KEY(movie_title) REFERENCES Movie(title),
+  FOREIGN KEY(reviewer) REFERENCES Reviewer(username)
+);
+
+CREATE TABLE IsIn(
+  name TEXT,
+  title TEXT,
+  PRIMARY KEY(name, title),
+  FOREIGN KEY(name) REFERENCES Actor(name),
+  FOREIGN KEY(title) REFERENCES Movie(title)
+);
+
+CREATE TABLE PlaysAt(
+  title TEXT,
+  cinID INT,
+  when DATETIME,
+  PRIMARY KEY(title, cinID, when)
+  FOREIGN KEY(title) REFERENCES Movie(title),
+  FOREIGN KEY(cinID) REFERENCES Cinema(cinID)
+);
+
+
+
+

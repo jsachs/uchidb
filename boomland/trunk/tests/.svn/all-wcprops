@@ -1,0 +1,113 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/boomland-235-p2/!svn/ver/96/trunk/tests
+END
+tests-pager.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/tests-pager.c
+END
+new.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/new.cdb
+END
+tests-utils.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/tests-utils.c
+END
+tests-schema.c
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/boomland-235-p2/!svn/ver/75/trunk/tests/tests-schema.c
+END
+tests-btree.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/tests-btree.c
+END
+bigfile.c
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/bigfile.c
+END
+tests-dbm.c
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/boomland-235-p2/!svn/ver/75/trunk/tests/tests-dbm.c
+END
+test1.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/test1.cdb
+END
+test2.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/test2.cdb
+END
+test3.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/test3.cdb
+END
+tests-gen.c
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/boomland-235-p2/!svn/ver/96/trunk/tests/tests-gen.c
+END
+test4.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/test4.cdb
+END
+test5.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/test5.cdb
+END
+temp.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/temp.cdb
+END
+tests-dbrecord.c
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/tests-dbrecord.c
+END
+main.c
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/boomland-235-p2/!svn/ver/86/trunk/tests/main.c
+END
+32k.dat
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/boomland-235-p2/!svn/ver/3/trunk/tests/32k.dat
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/boomland-235-p2/!svn/ver/82/trunk/tests/Makefile
+END

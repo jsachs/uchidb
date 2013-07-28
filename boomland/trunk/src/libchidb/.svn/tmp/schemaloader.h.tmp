@@ -1,0 +1,61 @@
+<<<<<<< .mine
+schemaloader.h
+#include "parser.h"
+=======
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "chidb.h"
+#include "chidbInt.h"
+#include "util.h"
+#include "record.h"
+#include "parser.h"
+>>>>>>> .r37
+
+/* FROM parser.h *****
+	
+struct ColumnSchema
+{
+	char *name;
+	uint8_t type;
+};
+
+**********************/
+
+typedef struct{
+	int ncols;
+	struct ColumnSchema *cols;
+}Schema_ColumnMap;
+
+typedef struct{
+	npage_t rootPage;
+	Schema_ColumnMap colMap;
+}Schema_Table;
+
+typedef struct{
+	char *assocName;
+	int rootPage;
+}Schema_Index;
+
+typedef struct Schema_Node {
+   int id;
+   char *name;
+   union{
+	Schema_Index index;
+	Schema_Table table;
+   }info;
+   struct Schema_Node *right;
+   struct Schema_Node *left;
+} Schema_Node;
+
+typedef struct{
+	struct Schema_Node *table_root;
+	struct Schema_Node *index_root;
+}Schema;
+
+int chidb_loadSchema(char *filename, Schema **schema);
+//npage_t chidb_lookupTablePage(Schema *schema,char *name);
+//npage_t chidb_lookupIndexPage(Schema *schema,char *name);
+Schema_Table *chidb_getTable(Schema *schema, char *tableName);
+Schema_ColumnMap *chidb_getColumnMap(Schema *schema, char *tableName);
+void chidb_printSchema(Schema *s);

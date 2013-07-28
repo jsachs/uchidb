@@ -1,0 +1,268 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "chidb.h"
+#include "chidbInt.h"
+#include "util.h"
+#include "record.h"
+#include "schemaloader.h"
+
+/* chidb_addSchemaNode
+ *
+ * Inserts a new schema node into a schema based on
+ * the table name.
+ *
+ * Parameters
+ * - toInsert: the Schema_Node being inserted - we assume is already has
+ *   a name and information
+ * - root: the root of the tree to insert into
+ * - id: the id to give this node
+ *
+ * Note: the actual table info is inserted outside of this
+ * function
+ *
+ */
+int chidb_addSchemaNode(Schema_Node *toInsert, Schema_Node **root, int id){
+  if((*root) == NULL){
+    toInsert->id = id;
+    // printf("Inserting %d ...\n",id);
+    *root = toInsert;
+    return CHIDB_OK;
+  }
+  int rid = (*root)->id;
+  if(strcmp(toInsert->name,(*root)->name) > 0){
+    // printf("RIGHT\n");
+    chidb_addSchemaNode(toInsert,&((*root)->right),rid+rid/2);
+  }
+  else if(strcmp(toInsert->name,(*root)->name) < 0){
+    // printf("LEFT\n");
+    chidb_addSchemaNode(toInsert,&((*root)->left),rid-rid/2);
+  }
+  else{ // duplicate entry, not sure if this is correct return
+    return CHIDB_ECONSTRAINT;
+  }
+  return CHIDB_OK;
+}
+
+
+
+/* chidb_loadSchema
+ *
+ * Loads the schema of a file into a Schema struct.
+ *
+ * Parameters
+ * - filename: the name of the file to read from
+ * - schema: a point to an empty schema struct to write to
+ *
+ */
+
+int chidb_loadSchema(chidb *db, Schema **schema){
+  int rc;
+  BTree *bt = db->bt;
+
+  BTreeNode *schemaTable;
+  rc = chidb_Btree_getNodeByPage(bt,1,&schemaTable);
+  if(rc != CHIDB_OK) return rc;
+
+  BTreeCell *btc;
+  DBRecord *dbr;
+
+  btc = (BTreeCell *) malloc(sizeof(BTreeCell));
+  if (NULL == btc) return CHIDB_ENOMEM;
+  dbr = (DBRecord *) malloc(sizeof(DBRecord));
+  if (NULL == dbr) return CHIDB_ENOMEM;
+
+  // initialize the schema struct
+  *schema = (Schema *) malloc(sizeof(Schema));
+  if (*schema == NULL) return CHIDB_ENOMEM;
+  (*schema)->table_root = NULL;
+  (*schema)->index_root = NULL;
+
+  // I'm a bit unsure about setting id's for these - not sure how they'll
+  // be used.
+  //
+  // For now, I'll use this since it ensures we can generate a unique
+  // key for every table in the schema corresponding to its 
+  // alphabetical order while giving room for new table insertions
+  int ROOT_ID = 2 * schemaTable->n_cells;
+
+  // variables for holding table info
+  char *type, *name, *assoc, *sql;
+  int32_t root_page;
+
+  for(int i = 0; i<schemaTable->n_cells; i++){
+    chidb_Btree_getCell(schemaTable,i,btc);
+    chidb_DBRecord_unpack(&dbr,btc->fields.tableLeaf.data);
+
+    // extract values
+    chidb_DBRecord_getString(dbr,0,&type);
+    chidb_DBRecord_getString(dbr,1,&name);
+    chidb_DBRecord_getString(dbr,2,&assoc);
+    chidb_DBRecord_getInt32(dbr,3,&root_page);
+    chidb_DBRecord_getString(dbr,4,&sql);
+
+    // put values in the schema structure
+    /*if(strcmp(type,"index")==0){
+      Schema_Node *new_node;
+      new_node = (Schema_Node *)malloc(sizeof(Schema_Node));
+      if(new_node == NULL) return CHIDB_ENOMEM;
+      strcpy(new_node->name,name);
+      strcpy(new_node->info.index.assocName,assoc);
+      new_node->info.index.rootPage = root_page;
+      new_node->left = NULL;
+      new_node->right= NULL;
+      rc = chidb_addSchemaNode(new_node,&((*db)->schema->index_root),ROOT_ID);
+      if(rc != CHIDB_OK) return rc;
+    } else */
+
+
+    if (strcmp(type,"table") == 0) {
+      // TODO free these new nodes and columns created here...
+      Schema_Node *new_node;
+      new_node = (Schema_Node *) malloc(sizeof(Schema_Node));
+      if (new_node == NULL) return CHIDB_ENOMEM;
+      
+      new_node->info.table.rootPage = root_page;
+      new_node->name                = name;
+      new_node->info.table.name     = name;
+
+      ColumnSchema *cols;
+      cols = (ColumnSchema *) calloc(sizeof(ColumnSchema), dbr->nfields);
+
+      SQLStatement *stmt;
+
+      if (strcat(sql,";") == NULL) {
+        free(dbr);
+        free(btc);
+        return CHIDB_ENOMEM;
+      }
+
+      rc = chidb_parser(sql, &stmt);
+      if (rc != CHIDB_OK) {
+        free(dbr);
+        free(btc);
+        return rc;
+      }
+
+      // transfer column mapping
+      int ncols = stmt->query.createTable.ncols;
+      for(int j = 0; j<ncols; j++){
+        cols[j] = stmt->query.createTable.cols[j];
+      }
+
+      new_node->info.table.colMap.cols        = cols;
+      new_node->info.table.colMap.ncols       = ncols;
+      new_node->info.table.colMap.primary_col = stmt->query.createTable.pk;
+
+      new_node->left = NULL;
+      new_node->right= NULL;
+      rc = chidb_addSchemaNode(new_node,&(*schema)->table_root,ROOT_ID);
+      if(rc != CHIDB_OK) return rc;
+    } else {
+      // someone put an incorrect value in the schema table
+      free(dbr);
+      free(btc);
+      return CHIDB_ECORRUPT;
+    }
+  }
+
+  free(dbr);
+  free(btc);
+  return CHIDB_OK;
+}
+
+/* chidb_getTable
+ *
+ * Return the table with the given name
+ *
+ */
+
+Schema_Table* chidb_getTableFromRoot(Schema_Node *root, const char *tableName){
+  if(root == NULL) return NULL;
+  int cmp = strcmp(tableName,root->name);
+  if(cmp == 0)
+    return &root->info.table;
+  if(cmp < 0)
+    return chidb_getTableFromRoot(root->left,tableName);
+  
+  return chidb_getTableFromRoot(root->right,tableName);
+}
+
+Schema_Table* chidb_getTable(Schema *schema, const char *tableName){
+  return chidb_getTableFromRoot(schema->table_root,tableName);
+}
+
+/* chidb_getColumnMap
+ *
+ * Returns the columnMap associated with a given table name
+ *
+ * PARAMETERS
+ * -schema: the schema struct
+ * -tableName: the name of the table you'd like the column map
+ *  for
+ *
+ *  Returns NULL if not found
+ */
+Schema_ColumnMap* chidb_getColumnMap(Schema *schema, const char *tableName){
+  // find proper table
+  Schema_Table *table = chidb_getTableFromRoot(schema->table_root,tableName);
+  if(table == NULL)
+    return NULL;
+  return &table->colMap;
+}
+
+// helper function for chidb_printSchema
+void chidb_printTableSchemaNodes(Schema_Node *sm){
+  if(sm != NULL){
+    printf("Name: %s Id: %d\nColumns       | ColType\n",sm->name,sm->id);
+    Schema_ColumnMap colMap = sm->info.table.colMap;
+    for(int i=0;i<colMap.ncols;i++){   
+      printf(" %-12s | %d\n",colMap.cols[i].name,colMap.cols[i].type);
+    }
+    printf("\n");
+    if(sm->right)
+      chidb_printTableSchemaNodes(sm->right);
+    if(sm->left)
+      chidb_printTableSchemaNodes(sm->left);
+  }
+}
+
+void chidb_printIndexSchemaNodes(Schema_Node *sm){
+  if(sm != NULL){
+    printf("Name: %s Id: %d Assoc: %s\n",
+    sm->name,sm->id,sm->info.index.assocName);
+    if(sm->right)
+      chidb_printIndexSchemaNodes(sm->right);
+    if(sm->left)
+      chidb_printIndexSchemaNodes(sm->left);
+  }
+}
+
+// prints the information stored in a schema
+void chidb_printSchema(Schema *s){
+  printf("\n== TABLES ======\n");
+  chidb_printTableSchemaNodes(s->table_root);
+
+  printf("== INDICES =====\n");
+  chidb_printIndexSchemaNodes(s->index_root);
+}
+
+
+
+
+//helper function for below
+void chidb_freeSchemaNode(Schema_Node *sm){
+	if(sm != NULL){
+		if(sm->isTable){
+			free(sm->info.table.colMap.cols);
+		}
+		chidb_freeSchemaNode(sm->right);
+		chidb_freeSchemaNode(sm->left);
+		free(sm);
+	}
+}
+
+void chidb_destroySchema(Schema *s){
+	chidb_freeSchemaNode(s->index_root);
+	chidb_freeSchemaNode(s->table_root);
+}

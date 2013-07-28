@@ -1,0 +1,9 @@
+/* grader - 3.15 - likely deptno is FK in salesperson */
+/* grader - 6.17 - overall a good job of commenting your answer but the most complicated one 6.17c has no useful comments */
+/* grader - 6.17e - you should return a number not a table */
+/* q1 (3.15)                       3/ 4 */
+/* q2 (6.17)                       9/10 */
+/* q3                              4/ 4 */
+/* q4                              5/ 5 */
+/* svn                             1/ 1 */
+/* total                          22/24 */

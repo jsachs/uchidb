@@ -1,0 +1,167 @@
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/boomland-235-p2/!svn/ver/99/trunk/src/libchidb
+END
+pager.c
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/pager.c
+END
+btree.c
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/boomland-235-p2/!svn/ver/50/trunk/src/libchidb/btree.c
+END
+parser.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/parser.h
+END
+dbm.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/boomland-235-p2/!svn/ver/97/trunk/src/libchidb/dbm.c
+END
+pager.h
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/pager.h
+END
+Team
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/boomland-235-p2/!svn/ver/20/trunk/src/libchidb/Team
+END
+sql.lex
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/sql.lex
+END
+gen_inst.c
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/boomland-235-p2/!svn/ver/82/trunk/src/libchidb/gen_inst.c
+END
+btree.h
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/btree.h
+END
+dbm.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/boomland-235-p2/!svn/ver/97/trunk/src/libchidb/dbm.h
+END
+gen.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/boomland-235-p2/!svn/ver/99/trunk/src/libchidb/gen.c
+END
+gen_inst.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/boomland-235-p2/!svn/ver/82/trunk/src/libchidb/gen_inst.h
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/boomland-235-p2/!svn/ver/99/trunk/src/libchidb/README
+END
+util.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/util.c
+END
+gen.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/boomland-235-p2/!svn/ver/82/trunk/src/libchidb/gen.h
+END
+record.c
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/record.c
+END
+util.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/util.h
+END
+dbmInt.h
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/boomland-235-p2/!svn/ver/71/trunk/src/libchidb/dbmInt.h
+END
+record.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/record.h
+END
+sigmas.c
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/boomland-235-p2/!svn/ver/98/trunk/src/libchidb/sigmas.c
+END
+main.c
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/boomland-235-p2/!svn/ver/93/trunk/src/libchidb/main.c
+END
+sql.y
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/sql.y
+END
+schemaloader.c
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/boomland-235-p2/!svn/ver/93/trunk/src/libchidb/schemaloader.c
+END
+sigmas.h
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/boomland-235-p2/!svn/ver/83/trunk/src/libchidb/sigmas.h
+END
+parser.c
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/boomland-235-p2/!svn/ver/3/trunk/src/libchidb/parser.c
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/boomland-235-p2/!svn/ver/71/trunk/src/libchidb/Makefile
+END
+schemaloader.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/boomland-235-p2/!svn/ver/93/trunk/src/libchidb/schemaloader.h
+END

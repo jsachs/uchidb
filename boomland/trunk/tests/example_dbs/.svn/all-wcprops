@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/boomland-235-p2/!svn/ver/95/trunk/tests/example_dbs
+END
+multitable_multipage.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/boomland-235-p2/!svn/ver/22/trunk/tests/example_dbs/multitable_multipage.cdb
+END
+tableindex_singlepage.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/boomland-235-p2/!svn/ver/22/trunk/tests/example_dbs/tableindex_singlepage.cdb
+END
+tablepages_strings.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/boomland-235-p2/!svn/ver/22/trunk/tests/example_dbs/tablepages_strings.cdb
+END
+join-these.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/boomland-235-p2/!svn/ver/95/trunk/tests/example_dbs/join-these.cdb
+END
+1page_strings.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/boomland-235-p2/!svn/ver/22/trunk/tests/example_dbs/1page_strings.cdb
+END
+tableindex_multipage.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/boomland-235-p2/!svn/ver/22/trunk/tests/example_dbs/tableindex_multipage.cdb
+END
+singletable_singlepage.cdb
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/boomland-235-p2/!svn/ver/60/trunk/tests/example_dbs/singletable_singlepage.cdb
+END
